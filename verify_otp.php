@@ -49,13 +49,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
                 $conn->commit();
                 clear_auth_failures("otp_verify");
-                session_regenerate_id(true);
-                unset($_SESSION["vendor_id"], $_SESSION["vendor_name"], $_SESSION["phone"], $_SESSION["admin_id"], $_SESSION["admin_name"]);
-                $_SESSION["user_id"] = (int)$user["id"];
-                $_SESSION["user_email"] = $user["email"];
-                $destination = $_SESSION["login_return"] ?? "index.php";
+                $returnUrl = $_SESSION["login_return"] ?? "index.php";
                 unset($_SESSION["pending_email"], $_SESSION["demo_otp"], $_SESSION["otp_attempts"], $_SESSION["otp_requested_at"], $_SESSION["login_return"]);
-                header("Location: " . $destination);
+                $redirect = complete_login('user', [
+                    'user_id' => (int)$user["id"],
+                    'user_email' => $user["email"],
+                    'return_url' => $returnUrl
+                ]);
+                header("Location: " . $redirect);
                 exit;
             } catch (Throwable $exception) {
                 $conn->rollback();

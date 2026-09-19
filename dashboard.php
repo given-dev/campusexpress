@@ -1,14 +1,9 @@
 <?php
 include "db.php";
-
-if (!isset($_SESSION["vendor_id"])) {
-    header("Location: login.php");
-    exit();
-}
+require_approved_vendor();
 
 $vendor_id = $_SESSION["vendor_id"];
 $vendor_name = $_SESSION["vendor_name"];
-$phone = $_SESSION["phone"];
 
 // Fetch vendor status for display
 $v_stmt = $conn->prepare("SELECT status FROM vendors WHERE id = ?");
@@ -29,6 +24,29 @@ $stats_stmt = $conn->prepare("SELECT
 $stats_stmt->bind_param("i", $vendor_id);
 $stats_stmt->execute();
 $stats = $stats_stmt->get_result()->fetch_assoc();
+
+// Get sales/orders stats
+$orders_stmt = $conn->prepare("SELECT
+    COUNT(*) as total_orders,
+    COUNT(DISTINCT customer_email) as unique_customers,
+    SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today_orders,
+    SUM(CASE WHEN YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) as week_orders,
+    SUM(CASE WHEN MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as month_orders
+    FROM orders WHERE vendor_id = ?");
+$orders_stmt->bind_param("i", $vendor_id);
+$orders_stmt->execute();
+$order_stats = $orders_stmt->get_result()->fetch_assoc();
+
+// Get recent orders
+$recent_orders = $conn->prepare("SELECT o.*, mi.food_name 
+    FROM orders o 
+    LEFT JOIN menu_items mi ON o.menu_item_id = mi.id 
+    WHERE o.vendor_id = ? 
+    ORDER BY o.created_at DESC 
+    LIMIT 10");
+$recent_orders->bind_param("i", $vendor_id);
+$recent_orders->execute();
+$recent = $recent_orders->get_result();
 
 ?>
 <!DOCTYPE html>
@@ -100,7 +118,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
       </a>
       <div style="display: flex; gap: 15px; align-items: center;">
         <span class="badge <?php echo $v_status == 'Approved' ? 'badge-approved' : 'badge-pending'; ?>">
-            <?php echo $v_status; ?>
+            <?php echo e($v_status); ?>
         </span>
         <a href="index.php" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">View Site</a>
         <a href="logout.php" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem;">Logout</a>
@@ -132,6 +150,72 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         </div>
     </div>
   </header>
+
+  <!-- Sales Analytics Section -->
+  <section class="container" style="margin-bottom: 40px;">
+    <h2 style="margin-bottom: 20px; font-size: 1.3rem;">Sales Analytics</h2>
+    <div class="stat-grid">
+        <div class="card stat-box" style="border-left: 4px solid #ff6b0b;">
+            <div class="val" style="color: #ff6b0b;"><?php echo number_format($order_stats['total_orders'] ?? 0); ?></div>
+            <div class="lab">Total Orders</div>
+        </div>
+        <div class="card stat-box" style="border-left: 4px solid #1d4ed8;">
+            <div class="val" style="color: #1d4ed8;"><?php echo number_format($order_stats['unique_customers'] ?? 0); ?></div>
+            <div class="lab">Customers Contacted</div>
+        </div>
+        <div class="card stat-box" style="border-left: 4px solid #25D366;">
+            <div class="val" style="color: #25D366;"><?php echo number_format($order_stats['today_orders'] ?? 0); ?></div>
+            <div class="lab">Today</div>
+        </div>
+        <div class="card stat-box" style="border-left: 4px solid #4f46e5;">
+            <div class="val" style="color: #4f46e5;"><?php echo number_format($order_stats['week_orders'] ?? 0); ?></div>
+            <div class="lab">This Week</div>
+        </div>
+        <div class="card stat-box" style="border-left: 4px solid #ec4899;">
+            <div class="val" style="color: #ec4899;"><?php echo number_format($order_stats['month_orders'] ?? 0); ?></div>
+            <div class="lab">This Month</div>
+        </div>
+    </div>
+  </section>
+
+  <!-- Recent Orders Section -->
+  <section class="container" style="margin-bottom: 40px;">
+    <h2 style="margin-bottom: 20px; font-size: 1.3rem;">Recent Orders</h2>
+    <div class="card" style="overflow: hidden;">
+        <?php if ($recent->num_rows > 0): ?>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc;">
+                    <tr>
+                        <th style="padding: 15px; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Order ID</th>
+                        <th style="padding: 15px; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Item</th>
+                        <th style="padding: 15px; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Customer</th>
+                        <th style="padding: 15px; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Method</th>
+                        <th style="padding: 15px; text-align: left; font-size: 0.8rem; color: #64748b; text-transform: uppercase;">Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($order = $recent->fetch_assoc()): ?>
+                        <tr style="border-top: 1px solid #f1f5f9;">
+                            <td style="padding: 15px; font-weight: 600;">#<?php echo (int)$order['id']; ?></td>
+                            <td style="padding: 15px;"><?php echo htmlspecialchars($order['food_name'] ?? 'N/A'); ?></td>
+                            <td style="padding: 15px; font-size: 0.85rem;"><?php echo htmlspecialchars($order['customer_email'] ?? 'Guest'); ?></td>
+                            <td style="padding: 15px;">
+                                <span class="badge" style="background: <?php echo $order['order_method'] == 'whatsapp' ? '#25D366' : '#111827'; ?>; color: white; font-size: 0.7rem;">
+                                    <?php echo e(ucfirst($order['order_method'])); ?>
+                                </span>
+                            </td>
+                            <td style="padding: 15px; font-size: 0.8rem; color: #64748b;"><?php echo date('M d, H:i', strtotime($order['created_at'])); ?></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <div style="text-align: center; padding: 40px; color: #64748b;">
+                <p>No orders yet. Orders will appear here when customers click "Order Now" on your items.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+  </section>
 
   <main class="container">
     <div class="grid" style="grid-template-columns: 1fr 2fr; align-items: start;">
@@ -197,7 +281,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                             </span>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <a href="edit_item.php?id=<?php echo $row['id']; ?>" class="btn btn-secondary" style="padding: 10px 15px;">Edit</a>
+                            <a href="edit_item.php?id=<?php echo (int)$row['id']; ?>" class="btn btn-secondary" style="padding: 10px 15px;">Edit</a>
                             <form action="delete_item.php" method="POST" onsubmit="return confirm('Delete this item?');" style="display:inline">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="id" value="<?php echo (int)$row['id']; ?>">

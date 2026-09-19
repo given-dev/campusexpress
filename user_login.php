@@ -9,6 +9,7 @@ if (is_string($returnTarget) && preg_match('/^index\.php#item-\d+$/', $returnTar
 if (isset($_SESSION["user_id"])) {
     $destination = $_SESSION["login_return"] ?? "index.php";
     unset($_SESSION["login_return"]);
+    if (!preg_match('#^index\.php#', $destination)) $destination = "index.php";
     header("Location: " . $destination);
     exit;
 }

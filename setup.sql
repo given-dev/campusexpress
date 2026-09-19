@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `vendors` (
   `password` varchar(255) NOT NULL,
   `business_address` text,
   `business_type` varchar(50),
-  `status` enum('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+  `status` enum('Pending', 'Approved', 'Rejected', 'Suspended') DEFAULT 'Pending',
   `registration_date` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` varchar(100) NOT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4. OTPs Table
@@ -78,5 +79,26 @@ CREATE TABLE IF NOT EXISTS `auth_attempts` (
   PRIMARY KEY (`id`),
   KEY `auth_attempt_lookup` (`identifier_hash`, `action_name`, `attempted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. Orders Table (tracks when customers click "Order on WhatsApp")
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `vendor_id` int(11) NOT NULL,
+  `menu_item_id` int(11) DEFAULT NULL,
+  `customer_email` varchar(100) DEFAULT NULL,
+  `order_method` enum('whatsapp', 'call') DEFAULT 'whatsapp',
+  `status` enum('initiated', 'completed', 'cancelled') DEFAULT 'initiated',
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_vendor_orders` (`vendor_id`),
+  KEY `idx_user_orders` (`user_id`),
+  KEY `idx_order_date` (`created_at`),
+  KEY `idx_orders_customer_email` (`customer_email`),
+  KEY `idx_orders_status` (`status`),
+  FOREIGN KEY (`vendor_id`) REFERENCES `vendors`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
 

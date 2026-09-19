@@ -1,180 +1,163 @@
 # CampusExpress
 
-CampusExpress is a PHP and MySQL campus marketplace where students discover nearby products, vendors manage listings, and administrators approve vendor accounts.
+A campus food delivery marketplace connecting vendors to students in Kampala, Uganda.
 
 ## Features
 
-- Public marketplace with search, category, and availability filters
-- Student passwordless sign-in using a six-digit one-time code
-- Vendor registration, approval workflow, login, and listing management
-- Administrator dashboard for vendor approval and rejection
-- Image upload validation for JPG, PNG, and WEBP files
-- CSRF protection, prepared SQL statements, password hashing, and role-based authorization
-- Responsive layouts for desktop and mobile
+- **Student Marketplace** — Browse food items from campus vendors
+- **WhatsApp Ordering** — Order directly via WhatsApp
+- **Email OTP Login** — Passwordless authentication using SendGrid
+- **Vendor Dashboard** — Manage menu items and track sales
+- **Admin Panel** — Review vendor applications and manage listings
+- **Mobile Responsive** — Optimized for smartphone users
 
-## Requirements
+## Tech Stack
 
-- XAMPP with Apache, PHP 8.0 or newer, and MySQL
-- PHP extensions: `mysqli` and `fileinfo` (enabled by default in XAMPP)
-- A modern web browser
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** PHP 8.0+
+- **Database:** MySQL
+- **Email:** SendGrid API
+- **Container:** Docker
 
-## Local setup with XAMPP
+## Credentials
 
-1. Clone or copy the project into:
+### Admin Accounts (existing in database)
 
-   ```text
-   C:\xampp\htdocs\campusexpress
-   ```
+| Username | Email | Password |
+|----------|-------|----------|
+| Admin | admin@campusexpress.com | *see below* |
+| Owner | owner@example.com | *see below* |
 
-2. Start **Apache** and **MySQL** from the XAMPP Control Panel.
+> Passwords are hashed in the database. Use the reset script to set a new password.
 
-3. Open [phpMyAdmin](http://localhost/phpmyadmin), create a database named `campusexpress`, and import `setup.sql`.
+### Reset Admin Password
 
-4. Open the application:
-
-   ```text
-   http://localhost/campusexpress/
-   ```
-
-The default database configuration in `db.php` is suitable for a standard XAMPP installation:
-
-```text
-Host: localhost
-User: root
-Password: (empty)
-Database: campusexpress
+```bash
+php scripts/reset_admin_password.php
 ```
 
-You can override these values with the `DB_HOST`, `DB_USER`, `DB_PASS`, and `DB_NAME` environment variables.
+Then enter:
+- Admin email
+- New password (min 12 characters)
 
-## Test accounts and login flows
+### Create New Admin
 
-### Administrator
-
-Create or update the administrator from a terminal after setting temporary environment variables:
-
-```powershell
-$env:ADMIN_EMAIL="owner@example.com"
-$env:ADMIN_PASSWORD="use-a-long-unique-password"
-$env:ADMIN_NAME="Owner"
-C:\xampp\php\php.exe scripts\create_admin.php
+```bash
+ADMIN_EMAIL=newadmin@example.com ADMIN_PASSWORD=your-secure-password php scripts/create_admin.php
 ```
 
-Then open `http://localhost/campusexpress/admin_login.php`. The setup script does not ship a default production password.
+### Vendor Accounts
 
-### Vendor
+Vendors register at `register.php` and are approved by admin. Login at `login.php`.
 
-1. Register at `register.php`.
-2. Sign in as the administrator and approve the new vendor.
-3. Sign in at `login.php`.
-4. Add, edit, mark sold out, or delete marketplace items from the vendor dashboard.
+### Student Accounts
 
-Only approved vendors can sign in.
+Students login via email OTP at `user_login.php`. No password required — a 6-digit code is sent to their email.
 
-### Student
+---
 
-1. Open `user_login.php`.
-2. Enter a valid email address.
-3. During local development, the six-digit code appears on `verify_otp.php`.
-4. Enter the code to sign in.
+## Installation
 
-Student codes expire after 10 minutes. A new code can be requested after 60 seconds, and verification is limited to five attempts.
+### Local Development (XAMPP)
 
-## Local and production OTP behavior
-
-CampusExpress displays OTP codes in the browser by default to make local testing possible. This must be disabled in production.
-
-Set this environment variable in production:
-
-```text
-APP_SHOW_OTP=0
+1. Clone the repository:
+```bash
+git clone https://github.com/given-dev/campusexpress.git
 ```
 
-For Apache, environment variables can be configured in the virtual-host configuration using `SetEnv`, followed by an Apache restart. Production OTP delivery uses the Resend API and requires `RESEND_API_KEY` plus a verified `MAIL_FROM` sender.
+2. Copy to XAMPP htdocs:
+```bash
+cp -r campusexpress C:/xampp/htdocs/
+```
 
-## Important URLs
+3. Start Apache and MySQL from XAMPP Control Panel
 
-| Area | URL |
-|---|---|
-| Marketplace | `http://localhost/campusexpress/` |
-| Student sign in | `http://localhost/campusexpress/user_login.php` |
-| Vendor sign in | `http://localhost/campusexpress/login.php` |
-| Vendor registration | `http://localhost/campusexpress/register.php` |
-| Admin sign in | `http://localhost/campusexpress/admin_login.php` |
-| phpMyAdmin | `http://localhost/phpmyadmin` |
+4. Create database:
+```bash
+mysql -u root -p < setup.sql
+```
 
-## Project structure
+5. Create admin account:
+```bash
+ADMIN_EMAIL=admin@campusexpress.com ADMIN_PASSWORD=your-secure-password php scripts/create_admin.php
+```
 
-```text
+6. Configure environment:
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+
+7. Access the site:
+```
+http://localhost/campusexpress/
+```
+
+### Docker
+
+```bash
+docker build -t campusexpress .
+docker run -p 8080:8080 campusexpress
+```
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `APP_ENV` | `production` or `development` | Yes |
+| `APP_KEY` | Secret key (32+ chars) | Yes |
+| `DB_HOST` | MySQL host | Yes |
+| `DB_NAME` | Database name | Yes |
+| `DB_USER` | MySQL username | Yes |
+| `DB_PASS` | MySQL password | Yes |
+| `SENDGRID_API_KEY` | SendGrid API key | For email OTP |
+| `MAIL_FROM` | Verified sender email | For email OTP |
+
+## Project Structure
+
+```
 campusexpress/
-├── index.php              Public marketplace
-├── user_login.php         Student OTP request
-├── verify_otp.php         Student OTP verification
-├── login.php              Vendor login
-├── register.php           Vendor registration
-├── dashboard.php          Vendor dashboard
-├── save_item.php          Create listing action
-├── edit_item.php          Listing edit form
-├── update_item.php        Update listing action
-├── delete_item.php        Delete listing action
-├── admin_login.php        Administrator login
-├── admin_dashboard.php    Vendor approval dashboard
-├── logout.php             Session logout
-├── db.php                 Database, session, CSRF, and upload helpers
-├── setup.sql              Database schema and default admin
-├── style.css              Shared responsive styles
-└── uploads/               Vendor product images
+├── index.php              # Main marketplace page
+├── user_login.php         # Student email OTP login
+├── verify_otp.php         # OTP verification
+├── login.php              # Vendor login
+├── register.php           # Vendor registration
+├── dashboard.php          # Vendor dashboard (sales analytics)
+├── admin_login.php        # Admin login
+├── admin_dashboard.php    # Admin panel (approve vendors)
+├── track_order.php        # Order tracking API
+├── save_item.php          # Add menu item
+├── edit_item.php          # Edit menu item
+├── update_item.php        # Update menu item
+├── delete_item.php        # Delete menu item
+├── db.php                 # Database & helpers
+├── mailer.php             # SendGrid email sender
+├── style.css              # Global styles
+├── setup.sql              # Database schema
+├── .env.example           # Environment template
+├── scripts/
+│   ├── create_admin.php   # Create admin account
+│   └── reset_admin_password.php  # Reset admin password
+└── uploads/               # Food images
 ```
 
-## Staging deployment
+## Admin Access
 
-Follow DEPLOYMENT.md for the Docker, managed MySQL, Resend, secret, persistent-upload, health-check, and acceptance-test procedure.
-
-## Security checklist before production
-
-- Serve the application over HTTPS.
-- Create a unique administrator password of at least 12 characters with `scripts/create_admin.php`.
-- Set a password for the MySQL account and provide it through environment variables.
-- Set `APP_SHOW_OTP=0`, `RESEND_API_KEY`, and a verified `MAIL_FROM` sender.
-- Move production secrets outside the repository.
-- Configure Apache to prevent script execution inside `uploads/`.
-- Retain the included database-backed authentication rate limits and add host-level limits as a second layer.
-- Back up the database and uploaded images.
-- Disable detailed PHP error output in production and log errors securely.
-
-## Verification
-
-Check the PHP syntax of every application file from PowerShell:
-
-```powershell
-Get-ChildItem C:\xampp\htdocs\campusexpress -Filter *.php |
-  ForEach-Object { C:\xampp\php\php.exe -l $_.FullName }
+Admin login is hidden from the public. Access directly:
+```
+http://localhost/campusexpress/admin_login.php
 ```
 
-A successful check prints `No syntax errors detected` for each file.
+## Security Features
 
-## Troubleshooting
-
-### Apache does not start
-
-Another program may already be using ports 80 or 443. Check the XAMPP logs or change the Apache port.
-
-### Database connection fails
-
-Confirm MySQL is running, the `campusexpress` database exists, and the credentials in `db.php` or the database environment variables are correct.
-
-### Vendor cannot sign in
-
-The vendor must first be approved through the administrator dashboard.
-
-### Images do not upload
-
-Confirm the `uploads` directory is writable and the file is JPG, PNG, or WEBP and no larger than 5 MB.
-
-### Student code does not appear
-
-For local development, make sure `APP_SHOW_OTP` is not set to `0`. In production, verify that the configured email or SMS provider sent the code.
+- Password hashing with bcrypt
+- CSRF protection on all forms
+- Rate limiting on login attempts (5 per 15 min)
+- Session regeneration on login
+- Image upload validation (MIME, dimensions, EXIF stripping)
+- OTP hashing before database storage
+- SQL injection prevention (prepared statements)
 
 ## License
 
-No license has been specified yet. Add a `LICENSE` file before distributing the project publicly.
+Private — CampusExpress 2026

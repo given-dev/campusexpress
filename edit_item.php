@@ -1,10 +1,6 @@
 <?php
 include "db.php";
-
-if (!isset($_SESSION["vendor_id"])) {
-    header("Location: login.php");
-    exit();
-}
+require_approved_vendor();
 
 $id = intval($_GET["id"]);
 $vendor_id = $_SESSION["vendor_id"];
@@ -17,7 +13,7 @@ $result = $stmt->get_result();
 $item = $result->fetch_assoc();
 
 if (!$item) {
-    die("Item not found or unauthorized access.");
+    header("Location: dashboard.php"); exit;
 }
 ?>
 <!DOCTYPE html>
@@ -97,7 +93,7 @@ if (!$item) {
             <div class="card" style="padding: 40px;">
                 <form action="update_item.php" method="POST" enctype="multipart/form-data">
                     <?php echo csrf_field(); ?>
-                    <input type="hidden" name="id" value="<?php echo $item['id']; ?>">">
+                    <input type="hidden" name="id" value="<?php echo (int)$item['id']; ?>">
 
                     <div class="form-group">
                         <label class="form-label">Item Name</label>
@@ -129,7 +125,7 @@ if (!$item) {
                     <div class="form-group">
                         <label class="form-label">Change Image</label>
                         <input type="file" name="image" class="form-control" accept="image/*">
-                        <p class="text-muted" style="font-size: 0.8rem; mt: 5px;">Leave empty to keep the current image.</p>
+                        <p class="text-muted" style="font-size: 0.8rem; margin-top: 5px;">Leave empty to keep the current image.</p>
                     </div>
 
                     <div class="form-group">

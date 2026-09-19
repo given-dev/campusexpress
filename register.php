@@ -3,17 +3,43 @@ include "db.php";
 
 $error = "";
 $success = "";
+$password = null;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     verify_post();
+    
+    // Rate limit registration attempts
+    if (auth_is_limited("vendor_register", 3, 60)) {
+        $error = "Too many registration attempts. Please try again later.";
+    } else {
     $vendor_name = trim($_POST["vendor_name"]);
     $email = trim($_POST["email"]);
     $phone = trim($_POST["phone"]);
     $address = trim($_POST["business_address"]);
     $type = trim($_POST["business_type"]);
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $rawPassword = $_POST["password"] ?? "";
+    
+    // Email validation
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Enter a valid email address.";
+    }
+    
+    // Phone validation
+    if (empty($error) && !preg_match('/^[0-9+\-\s]{7,20}$/', $phone)) {
+        $error = "Enter a valid phone number.";
+    }
+    
+    // Password strength validation
+    if (strlen($rawPassword) < 8) {
+        $error = "Password must be at least 8 characters.";
+    } elseif (!preg_match('/[A-Z]/', $rawPassword) || !preg_match('/[a-z]/', $rawPassword) || !preg_match('/[0-9]/', $rawPassword)) {
+        $error = "Password must contain uppercase, lowercase, and a number.";
+    } else {
+        $password = password_hash($rawPassword, PASSWORD_DEFAULT);
+    }
 
     // Check if email exists
+    if (empty($error)) {
     $check = $conn->prepare("SELECT id FROM vendors WHERE email = ?");
     $check->bind_param("s", $email);
     $check->execute();
@@ -28,6 +54,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $error = "Registration failed. Please try again.";
         }
+    }
+}
     }
 }
 ?>
@@ -85,13 +113,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <p class="text-muted">Register your business and start selling to students.</p>
   </div>
 
-  <?php if($error): ?>
-    <div class="alert alert-error"><?php echo $error; ?></div>
-  <?php endif; ?>
+    <?php if($error): ?>
+    <div class="alert alert-error"><?php echo e($error); ?></div>
+    <?php endif; ?>
 
-  <?php if($success): ?>
+    <?php if($success): ?>
     <div class="alert alert-success">
-        <?php echo $success; ?>
+        <?php echo e($success); ?>
         <p style="margin-top: 10px;"><a href="login.php" class="btn btn-primary" style="width: 100%;">Go to Login</a></p>
     </div>
   <?php else: ?>

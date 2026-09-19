@@ -19,10 +19,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "The email or password is incorrect.";
         } else {
             clear_auth_failures("admin_login");
-            session_regenerate_id(true);
-            unset($_SESSION["vendor_id"], $_SESSION["vendor_name"], $_SESSION["phone"], $_SESSION["user_id"], $_SESSION["user_email"]);
-            $_SESSION["admin_id"]=(int)$admin["id"]; $_SESSION["admin_name"]=$admin["username"];
-            header("Location: admin_dashboard.php"); exit;
+            $redirect = complete_login('admin', [
+                'admin_id' => (int)$admin["id"],
+                'admin_name' => $admin["username"]
+            ]);
+            header("Location: $redirect"); exit;
         }
     }
 }

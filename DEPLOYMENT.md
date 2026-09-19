@@ -40,13 +40,13 @@ Do not use the local demonstration administrator password on staging or producti
 
 ## Real OTP email
 
-1. Add and verify your sending domain in Resend.
-2. Create a restricted Resend API key.
-3. Set `RESEND_API_KEY` in the host's secret settings.
-4. Set `MAIL_FROM` to a sender on the verified domain, for example `CampusExpress <login@example.com>`.
+1. Add and verify your sending domain in SendGrid.
+2. Create a restricted SendGrid API key.
+3. Set `SENDGRID_API_KEY` in the host's secret settings.
+4. Set `MAIL_FROM` to a sender on the verified domain, for example `login@example.com`.
 5. Keep `APP_SHOW_OTP=0`.
 
-The application sends `POST https://api.resend.com/emails` with bearer authentication. Failed delivery invalidates the newly generated OTP.
+The application sends `POST https://api.sendgrid.com/v3/mail/send` with bearer authentication. Failed delivery invalidates the newly generated OTP.
 
 ## Persistent uploads
 

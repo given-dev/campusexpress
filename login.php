@@ -12,21 +12,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         record_auth_failure("vendor_login");
         $error = "Enter a valid email address and password.";
     } else {
+        // Try vendor login first
         $stmt = $conn->prepare("SELECT id, vendor_name, phone, password, status FROM vendors WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email); $stmt->execute(); $vendor = $stmt->get_result()->fetch_assoc();
-        if (!$vendor || !password_verify($password, $vendor["password"])) {
+        
+        if ($vendor && password_verify($password, $vendor["password"])) {
+            // Vendor found and password matches
+            if ($vendor["status"] === "Pending") {
+                $error = "Your vendor account is awaiting administrator approval.";
+            } elseif ($vendor["status"] === "Rejected") {
+                $error = "This vendor account is unavailable. Please contact support.";
+            } elseif ($vendor["status"] === "Suspended") {
+                $error = "Your vendor account has been suspended. Please contact support.";
+            } else {
+                clear_auth_failures("vendor_login");
+                $redirect = complete_login('vendor', [
+                    'vendor_id' => (int)$vendor["id"],
+                    'vendor_name' => $vendor["vendor_name"],
+                    'phone' => $vendor["phone"]
+                ]);
+                header("Location: $redirect"); exit;
+            }
+        } else {
             record_auth_failure("vendor_login");
             $error = "The email or password is incorrect.";
-        } elseif ($vendor["status"] === "Pending") {
-            $error = "Your vendor account is awaiting administrator approval.";
-        } elseif ($vendor["status"] === "Rejected") {
-            $error = "This vendor account is unavailable. Please contact support.";
-        } else {
-            clear_auth_failures("vendor_login");
-            session_regenerate_id(true);
-            unset($_SESSION["admin_id"], $_SESSION["admin_name"], $_SESSION["user_id"], $_SESSION["user_email"]);
-            $_SESSION["vendor_id"]=(int)$vendor["id"]; $_SESSION["vendor_name"]=$vendor["vendor_name"]; $_SESSION["phone"]=$vendor["phone"];
-            header("Location: dashboard.php"); exit;
         }
     }
 }
@@ -49,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="auth-form-wrap">
       <a href="index.php" class="auth-back">← Back to marketplace</a>
       <div class="auth-card-clean">
-        <header class="auth-heading"><h2>Vendor sign in</h2><p class="text-muted">Use your approved vendor account.</p></header>
+        <header class="auth-heading"><h2>Vendor sign in</h2><p class="text-muted">Use your vendor or admin account.</p></header>
         <?php if ($error): ?><div class="auth-alert auth-alert-error" role="alert"><?php echo e($error); ?></div><?php endif; ?>
         <form method="POST">
           <?php echo csrf_field(); ?>
