@@ -1,0 +1,36 @@
+/* Scoped to customer login; verification and vendor forms retain their styles. */
+.reference-login{background:#fff8f2;padding:32px 16px;align-items:center;min-height:100dvh}
+.reference-login .customer-auth-shell{width:min(100%,440px);padding:0;background:#fff;border-radius:32px;overflow:hidden;box-shadow:0 16px 60px rgba(116,58,16,.09);border:1px solid #ffeadb}
+.login-banner{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:210px;padding:32px 24px;background:linear-gradient(115deg,#a83d08,#f97316 65%,#ffb258);border-radius:0 0 32px 32px;overflow:hidden;text-align:left;isolation:isolate}
+.login-banner::after{content:'';position:absolute;z-index:-1;width:220px;height:220px;right:-65px;bottom:-90px;background:#fff2;border-radius:50%}
+.login-banner-copy{display:flex;flex-direction:column;gap:12px;color:white;min-width:0}
+.login-wordmark{font-family:'Outfit',sans-serif;font-size:clamp(1.15rem,4.8vw,1.5rem);font-weight:800;letter-spacing:-.04em;white-space:nowrap}
+.login-wordmark>span{color:#ffe1b8}.login-tagline{font-size:.8rem;line-height:1.65;color:#fff2e7}
+.login-banner-logo{width:clamp(100px,30vw,144px);height:auto;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 10px 15px #6d26022b)}
+.reference-login .customer-auth-card{padding:28px 24px 12px;border:0;box-shadow:none;border-radius:0}
+.reference-login .customer-auth-heading{text-align:left;margin-bottom:24px}
+.reference-login .customer-auth-heading h1{font-size:1.7rem;line-height:1.2;letter-spacing:-.025em;margin-bottom:10px;color:#1e252b}
+.reference-login .customer-auth-heading p{font-size:.82rem;color:#73777b}
+.reference-login .form-label{font-size:.78rem;color:#666;margin-bottom:8px}
+.login-email-wrap{position:relative;display:flex;align-items:center}.login-email-wrap svg{position:absolute;left:16px;color:#898d90;pointer-events:none}
+.reference-login .customer-auth-card .form-control{min-height:52px;border:1px solid #e9e9e5;border-radius:28px;padding:14px 18px 14px 46px;background:#f7f7f3;font-size:.86rem;box-shadow:none}
+.reference-login .customer-auth-card .form-control:focus{background:#fff;border-color:#f97316;outline:3px solid #ffedd5;outline-offset:2px}
+.login-email-help{font-size:.7rem;color:#777;margin:8px 12px 0}
+.reference-login .customer-auth-continue{min-height:50px;border-radius:28px;background:linear-gradient(100deg,#c64b0b,#f97316 65%,#ff9b35);text-transform:none;letter-spacing:0;font-size:.92rem;box-shadow:none;margin-top:6px}
+.reference-login .customer-auth-continue:hover{background:linear-gradient(100deg,#a83d08,#ea580c 65%,#f78b24)}
+.reference-login .customer-auth-note{font-size:.68rem;line-height:1.6;margin-top:18px;color:#888}
+.reference-login .customer-auth-security{font-size:.71rem;margin-top:16px;padding:12px 0;border-top:1px solid #f2f2ef;color:#777}
+.reference-login .auth-helper{font-size:.7rem;color:#888;margin-top:8px}
+.login-switch{text-align:center;font-size:.8rem;color:#777;margin-top:24px}.login-switch a{color:#c64b0b;font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+.reference-login .customer-auth-secondary{margin-top:8px;padding-top:10px;font-size:.72rem;border-top:0}.reference-login .customer-auth-secondary a{display:inline-flex;align-items:center;min-height:44px;color:#c64b0b}
+.reference-login .customer-auth-home{margin:0 0 14px;min-height:44px;display:inline-flex;align-items:center;font-size:.75rem}
+.reference-login a:focus-visible,.reference-login button:focus-visible{outline:3px solid #9a3412;outline-offset:3px}
+@media(max-width:520px){.reference-login{padding:0;background:white;align-items:flex-start}.reference-login .customer-auth-shell{border:0;border-radius:0;box-shadow:none;width:100%;max-width:440px;margin-inline:auto}.login-banner{min-height:220px;padding-top:36px}.reference-login .customer-auth-card{padding:28px 24px 10px}}
+@media(max-width:350px){.login-banner{padding-inline:20px;gap:8px}.login-wordmark{font-size:1.12rem}.login-banner-logo{width:100px}}
+
+.reference-login .customer-auth-card .password-input{padding-left:18px}
+.password-recovery{display:inline-flex;align-items:center;min-height:44px;font-size:.72rem;color:#c64b0b;margin-bottom:8px}
+.login-divider{display:flex;align-items:center;gap:12px;margin:24px 0 16px;color:#888;font-size:.75rem}
+.login-divider::before,.login-divider::after{content:'';height:1px;background:#eee;flex:1}
+.google-button{display:flex;align-items:center;justify-content:center;gap:12px;min-height:50px;width:100%;border:1px solid #e5e7eb;border-radius:28px;background:#fff;color:#34383c;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer}
+.google-button:hover{background:#fafafa}.google-button:disabled{cursor:default;opacity:.6}.google-letter{font-family:Arial,sans-serif;color:#4285f4;font-size:22px;font-weight:700}

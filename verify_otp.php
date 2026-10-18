@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $attempts = (int)($_SESSION["otp_attempts"] ?? 0);
 
     if (auth_is_limited("otp_verify", 10, 15) || $attempts >= 5) {
-        unset($_SESSION["pending_email"], $_SESSION["demo_otp"], $_SESSION["otp_attempts"]);
+        unset($_SESSION["pending_email"], $_SESSION["demo_otp"], $_SESSION["otp_attempts"], $_SESSION["pending_password_hash"]);
         header("Location: user_login.php");
         exit;
     }
@@ -47,10 +47,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $insert->execute();
                     $user = ["id" => $conn->insert_id, "email" => $email];
                 }
+                if (!empty($_SESSION['pending_password_hash'])) {
+                    $passwordHash = $_SESSION['pending_password_hash'];
+                    $setPassword = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+                    $setPassword->bind_param('si', $passwordHash, $user['id']); $setPassword->execute();
+                }
                 $conn->commit();
                 clear_auth_failures("otp_verify");
                 $returnUrl = $_SESSION["login_return"] ?? "index.php";
-                unset($_SESSION["pending_email"], $_SESSION["demo_otp"], $_SESSION["otp_attempts"], $_SESSION["otp_requested_at"], $_SESSION["login_return"]);
+                unset($_SESSION["pending_email"], $_SESSION["demo_otp"], $_SESSION["otp_attempts"], $_SESSION["otp_requested_at"], $_SESSION["login_return"], $_SESSION["pending_password_hash"]);
                 $redirect = complete_login('user', [
                     'user_id' => (int)$user["id"],
                     'user_email' => $user["email"],

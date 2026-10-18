@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS `vendors` (
 -- 3. Users Table (Students/Customers)
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `password_hash` varchar(255) DEFAULT NULL,
+  `google_sub` varchar(255) DEFAULT NULL,
+  UNIQUE KEY `idx_users_google_sub` (`google_sub`),
   `full_name` varchar(100) DEFAULT NULL,
   `email` varchar(100) NOT NULL,
   `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,

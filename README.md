@@ -6,7 +6,8 @@ A campus food delivery marketplace connecting vendors to students in Kampala, Ug
 
 - **Student Marketplace** — Browse food items from campus vendors
 - **WhatsApp Ordering** — Order directly via WhatsApp
-- **Email OTP Login** — Passwordless authentication using SendGrid
+- **Customer Sign In** — Email/password login with email verification and password recovery using SendGrid
+- **Google Sign In** — Optional Google OAuth login; configure using [customer authentication setup](deploy/CUSTOMER_AUTH.md)
 - **Vendor Dashboard** — Manage menu items and track sales
 - **Admin Panel** — Review vendor applications and manage listings
 - **Mobile Responsive** — Optimized for smartphone users
@@ -52,7 +53,7 @@ Vendors register at `register.php` and are approved by admin. Login at `login.ph
 
 ### Student Accounts
 
-Students login via email OTP at `user_login.php`. No password required — a 6-digit code is sent to their email.
+Students sign in with email and password at `user_login.php`. Registration and password recovery verify a 6-digit email code before saving the password. Google sign-in is optional and requires OAuth credentials. Run `php scripts/migrate_customer_auth.php` for existing databases; see [customer authentication setup](deploy/CUSTOMER_AUTH.md).
 
 ---
 
